@@ -106,7 +106,8 @@ theta3 = pi / 2 - (angle_b + 0.036)
 Use the transposed matrix R03 (rotation betweeb base and third joint), and ROT_EE (rotation betweeb base and end effector) to get R36.
 
 Then we can get Euler Angles from R36
-<img src="./misc_images/angle2.png" width="500">
+
+<img src="./misc_images/euler.png" width="500">
 
 Codes
 ```python
