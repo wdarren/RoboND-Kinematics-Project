@@ -176,5 +176,6 @@ This is a fun project, and do let me understand the kinematics of a six DoF mani
 ## Future Improvement
 Sometimes the manipulator move in wierd pose, and kind of "swing" during movement. This might due to the multiple solutions of inverse kinematics, or some extreme conditions, for example, if the theta is from -150 to +120 degree, it can be either -150->-240 (equivelant of +120), or -150->0->120.
 
+It also happens that when the pose is correct, but the gripper can not grasp the object firmly.
 
 
