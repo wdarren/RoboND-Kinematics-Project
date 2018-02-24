@@ -24,19 +24,13 @@ DH table is a common convention to define the reference frames of a robot.
 
 Another good illustration can be also found [in the video](https://youtu.be/rA9tm0gTln8)
 
-The DH table for KR210 robot:
-Links | alpha(i-1) | a(i-1) | d(i-1) | theta(i)
---- | --- | --- | --- | ---
-0->1 | 0 | 0 | 0.75 | q1
-1->2 | - pi/2 | 0.35 | 0 | -pi/2 + q2
-2->3 | 0 | 1.25 | 0 | 0
-3->4 |  - pi/2 | -0.054 | 1.5 | q3
-4->5 |  pi/2 | 0 | 0 | q4
-5->6 | - pi/2 | 0 | 0 | q5
-6->EE | 0 | 0 | 0.303 | q6
+Based on the frame assignments in URDF given, we can obtain the DH table.
 
-Codes are as follows
-```python
+<img src="./misc_images/frame1.png" width="500">
+<img src="./misc_images/frame2.jpg" width="500">
+
+The DH table for KR210 robot:
+``` python
 DH_table = { alpha0:     0.,  a0:      0.,   d1:  0.75,   q1:         q1,
             alpha1: -pi/2.,  a1:    0.35,   d2:    0.,   q2: -pi/2. +q2,
             alpha2:     0.,  a2:    1.25,   d3:    0.,   q3:         q3,
@@ -103,6 +97,11 @@ T6_EE([[1, 0, 0,     0],
        [0, 1, 0,     0], 
        [0, 0, 1, 0.303], 
        [0, 0, 0,     1]])
+       
+T0_EE([[((sin(q1)*sin(q4) + sin(q2 + q3)*cos(q1)*cos(q4))*cos(q5) + sin(q5)*cos(q1)*cos(q2 + q3))*cos(q6) + (sin(q1)*cos(q4) - sin(q4)*sin(q2 + q3)*cos(q1))*sin(q6), -((sin(q1)*sin(q4) + sin(q2 + q3)*cos(q1)*cos(q4))*cos(q5) + sin(q5)*cos(q1)*cos(q2 + q3))*sin(q6) + (sin(q1)*cos(q4) - sin(q4)*sin(q2 + q3)*cos(q1))*cos(q6), -(sin(q1)*sin(q4) + sin(q2 + q3)*cos(q1)*cos(q4))*sin(q5) + cos(q1)*cos(q5)*cos(q2 + q3), -0.303*sin(q1)*sin(q4)*sin(q5) + 1.25*sin(q2)*cos(q1) - 0.303*sin(q5)*sin(q2 + q3)*cos(q1)*cos(q4) - 0.054*sin(q2 + q3)*cos(q1) + 0.303*cos(q1)*cos(q5)*cos(q2 + q3) + 1.5*cos(q1)*cos(q2 + q3) + 0.35*cos(q1)], 
+       [((sin(q1)*sin(q2 + q3)*cos(q4) - sin(q4)*cos(q1))*cos(q5) + sin(q1)*sin(q5)*cos(q2 + q3))*cos(q6) - (sin(q1)*sin(q4)*sin(q2 + q3) + cos(q1)*cos(q4))*sin(q6), ((-sin(q1)*sin(q2 + q3)*cos(q4) + sin(q4)*cos(q1))*cos(q5) - sin(q1)*sin(q5)*cos(q2 + q3))*sin(q6) - (sin(q1)*sin(q4)*sin(q2 + q3) + cos(q1)*cos(q4))*cos(q6), (-sin(q1)*sin(q2 + q3)*cos(q4) + sin(q4)*cos(q1))*sin(q5) + sin(q1)*cos(q5)*cos(q2 + q3), 1.25*sin(q1)*sin(q2) - 0.303*sin(q1)*sin(q5)*sin(q2 + q3)*cos(q4) - 0.054*sin(q1)*sin(q2 + q3) + 0.303*sin(q1)*cos(q5)*cos(q2 + q3) + 1.5*sin(q1)*cos(q2 + q3) + 0.35*sin(q1) + 0.303*sin(q4)*sin(q5)*cos(q1)], 
+       [(-sin(q5)*sin(q2 + q3) + cos(q4)*cos(q5)*cos(q2 + q3))*cos(q6) - sin(q4)*sin(q6)*cos(q2 + q3), (sin(q5)*sin(q2 + q3) - cos(q4)*cos(q5)*cos(q2 + q3))*sin(q6) - sin(q4)*cos(q6)*cos(q2 + q3), -sin(q5)*cos(q4)*cos(q2 + q3) - sin(q2 + q3)*cos(q5), -0.303*sin(q5)*cos(q4)*cos(q2 + q3) - 0.303*sin(q2 + q3)*cos(q5) - 1.5*sin(q2 + q3) + 1.25*cos(q2) - 0.054*cos(q2 + q3) + 0.75], 
+       [0, 0, 0, 1]])
 ``` 
 
 
@@ -119,6 +118,13 @@ ROT_y = Matrix([[cos(p),    0 ,     sin(p)],
 ROT_z = Matrix([[cos(y), -sin(y), 0],
                 [sin(y), cos(y), 0],
                 [0, 0, 1]]) 
+```
+To compensate the error between URDF and DH table, we need to perform a 180 degree counter-clockwise rotation around the `z axis` and a 90 degree clockwise rotation around the `y axis`.
+```python
+ROT_EE = simplify(ROT_z * ROT_y * ROT_x)
+Rot_Error = ROT_z.subs(y, radians(180)) * ROT_y.subs(p, radians(-90))
+
+ROT_EE = simplify(ROT_EE * Rot_Error)
 ```
 ## Joint angles of joint 1-3
 For a six degree of freedom serial manipulator with a spherical wrist, usually the first three joints are for controlling the position of the wrist center while the last three joints would orient the end effector as needed.
@@ -164,7 +170,11 @@ else:
     theta4 = atan2(R36[2,2], -R36[0,2])
     theta6 = atan2(-R36[1,1], R36[1,0])
 ```
+## Conclusion
+This is a fun project, and do let me understand the kinematics of a six DoF manipulator. I hope there is more about the trajectory planning and control, which I am sure will be included in the following projects of the program. I am really looking forward to it.
 
+## Future Improvement
+Sometimes the manipulator move in wierd pose, and kind of "swing" during movement. This might due to the multiple solutions of inverse kinematics, or some extreme conditions, for example, if the theta is from -150 to +120 degree, it can be either -150->-240 (equivelant of +120), or -150->0->120.
 
 
 
